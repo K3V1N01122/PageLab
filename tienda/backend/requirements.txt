@@ -1,0 +1,5 @@
+# Dependencias de ejecución (versiones estables, fijadas por rango compatible)
+Flask>=3.1,<3.2
+Pillow>=11,<13            # validación y optimización de imágenes
+gunicorn>=23,<24          # servidor WSGI de producción
+psycopg[binary]>=3.2,<3.3 # PostgreSQL (producción)

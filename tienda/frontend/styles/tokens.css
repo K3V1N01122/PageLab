@@ -1,0 +1,31 @@
+/* Tokens de diseño. Los colores principales pueden sobrescribirse desde
+   Panel > Configuración > Tema (se aplican como variables CSS al cargar). */
+:root {
+  --ink: #1D2B36;          /* texto principal, encabezado */
+  --ink-soft: #3B4A55;
+  --muted: #5B6770;        /* texto secundario (contraste AA sobre --paper) */
+  --paper: #F6F7F5;        /* fondo general, frío */
+  --surface: #FFFFFF;
+  --line: #DDE2DF;
+  --line-strong: #C3CAC6;
+  --accent: #1F7A63;       /* acciones: jade */
+  --accent-strong: #17614E;
+  --accent-tint: #E4F1EC;
+  --brass: #B07D2B;        /* exclusivo del programa de puntos */
+  --brass-tint: #F5ECDD;
+  --sale: #B3261E;
+  --sale-tint: #FBE9E7;
+  --warn-tint: #FFF4D6;
+  --ok: #1F7A63;
+
+  --font: "Schibsted Grotesk", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  /* Escala modular 1.25 */
+  --fs-xs: .8rem; --fs-sm: .9rem; --fs-md: 1rem; --fs-lg: 1.25rem; --fs-xl: 1.56rem; --fs-2xl: 1.95rem; --fs-3xl: 2.44rem; --fs-4xl: 3.05rem;
+  --lh-tight: 1.1; --lh: 1.55;
+
+  --space-1: .25rem; --space-2: .5rem; --space-3: .75rem; --space-4: 1rem; --space-5: 1.5rem; --space-6: 2rem; --space-7: 3rem; --space-8: 4.5rem;
+  --radius-sm: 6px; --radius: 10px; --radius-lg: 16px;
+  --container: 1240px;
+  --focus: 0 0 0 3px var(--paper), 0 0 0 5px var(--accent);
+  --shadow-card: 0 18px 40px -18px rgba(29, 43, 54, .45);
+}

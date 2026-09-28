@@ -1,0 +1,3 @@
+-r requirements.txt
+# Las pruebas usan unittest (biblioteca estándar); pytest es opcional:
+pytest>=8,<9
