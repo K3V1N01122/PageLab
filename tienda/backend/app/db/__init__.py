@@ -47,6 +47,8 @@ class Connection:
     # -- utilidades -------------------------------------------------------
     def _sql(self, sql: str) -> str:
         if self.dialect == "postgres":
+            # psycopg usa % para parámetros: un % literal (p. ej. en un comentario
+            # SQL) debe escaparse como %% antes de convertir ? en %s.
             return _PARAM_RE.sub("%s", sql.replace("%", "%%"))
         return sql
 

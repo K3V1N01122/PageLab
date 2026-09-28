@@ -6,6 +6,9 @@ import { toast, toastError } from '../../components/toast.js';
 import { statusPill } from '../../pages/account/layout.js';
 import { go, can } from '../main.js';
 import { pageHead } from '../ui.js';
+import { store } from '../../store/store.js';
+
+const PAY_STATUS = { pending: 'pendiente', paid: 'pagado', failed: 'rechazado', cancelled: 'cancelado', refund_due: 'reembolso pendiente' };
 
 export default async function orders(el, ctx) {
   if (ctx.sub[0]) return detail(el, parseInt(ctx.sub[0], 10));
@@ -47,6 +50,9 @@ async function detail(el, id) {
   const next = [...(meta.transitions[o.status] || [])].sort((a, b) => order[a] - order[b]);
   const labels = Object.fromEntries(meta.items.map((s) => [s.code, s.label]));
   const a = o.shipping_address;
+  const cfg = store.get().config || {};
+  const shipLabel = (cfg.shipping_methods || []).find((m) => m.code === o.shipping_method)?.label || o.shipping_method;
+  const payLabel = (cfg.payment_providers || []).find((p) => p.code === o.payment_provider)?.label || o.payment_provider;
   render(el, html`
     ${pageHead(`Pedido ${o.order_number}`, html`<a class="btn btn--ghost" href="/admin/pedidos">Volver a pedidos</a>`)}
     <p>${statusPill(o.status, o.status_label)} <span class="muted">Creado el ${dateTime(o.created_at)}</span></p>
@@ -65,9 +71,9 @@ async function detail(el, id) {
       <section class="a-card"><h2 class="a-card__title">Cliente y entrega</h2>
         <dl class="kv kv--stack">
           <div><dt>Cliente</dt><dd>${o.customer_name}<br>${o.customer_email}${o.customer_phone ? html`<br>${o.customer_phone}` : ''}</dd></div>
-          <div><dt>Entrega</dt><dd>${o.shipping_method}</dd></div>
+          <div><dt>Entrega</dt><dd>${shipLabel}</dd></div>
           ${a ? html`<div><dt>Dirección</dt><dd>${a.recipient}, ${a.phone}<br>${a.line1}${a.line2 ? `, ${a.line2}` : ''}<br>${a.city}${a.state ? `, ${a.state}` : ''}${a.notes ? html`<br>${a.notes}` : ''}</dd></div>` : ''}
-          <div><dt>Pago</dt><dd>${o.payment_provider}: ${o.payment_status === 'paid' ? 'pagado' : o.payment?.status || 'pendiente'}</dd></div>
+          <div><dt>Pago</dt><dd>${payLabel}: ${PAY_STATUS[o.payment_status === 'paid' ? 'paid' : o.payment?.status || 'pending'] || o.payment?.status}</dd></div>
           ${o.notes ? html`<div><dt>Notas del cliente</dt><dd>${o.notes}</dd></div>` : ''}
         </dl>
         ${can('orders.update') && next.length ? html`

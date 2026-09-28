@@ -7,6 +7,8 @@ import { renderHeader, updateCartCount, closeMobileNav } from './components/head
 import { renderFooter } from './components/footer.js';
 import { icons } from './components/icons.js';
 import { toast, toastError } from './components/toast.js';
+import { initMotion } from './utils/motion.js';
+import { applyFont } from './utils/fonts.js';
 
 const header = document.getElementById('site-header');
 const footer = document.getElementById('site-footer');
@@ -84,6 +86,7 @@ async function boot() {
     store.set({ config });
     window.__STORE_NAME__ = config.store?.name || '';
     applyTheme(config.theme);
+    applyFont(config.theme?.font);
   } catch (err) {
     main.innerHTML = '';
     const p = document.createElement('p');
@@ -92,6 +95,7 @@ async function boot() {
     main.appendChild(p);
     return;
   }
+  initMotion();
   renderHeader(header, categories);
   renderFooter(footer, categories);
   let lastUser = store.get().user?.id;

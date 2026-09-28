@@ -116,10 +116,10 @@ fieldset { border: 0; padding: 0; margin: 0; min-width: 0; }
   border: 26px solid var(--brass); opacity: .55; z-index: -1; }
 .loyalty-card::after { content: ""; position: absolute; inset: 0; border-radius: inherit; border: 1px solid rgba(255,255,255,.12); pointer-events: none; }
 .loyalty-card__top { display: flex; justify-content: space-between; align-items: baseline; gap: var(--space-3); }
-.loyalty-card__store { font-weight: 800; letter-spacing: -.01em; }
+.loyalty-card__store { font-family: var(--font-display); font-weight: 800; letter-spacing: -.01em; }
 .loyalty-card__program { font-size: var(--fs-xs); color: #D9C39A; }
 .loyalty-card__points { margin: auto 0 0; font-size: var(--fs-sm); color: #D6DDE1; }
-.loyalty-card__num { display: block; font-size: clamp(2rem, 6vw, 2.9rem); font-weight: 800; letter-spacing: -.03em; color: #fff; line-height: 1; }
+.loyalty-card__num { font-family: var(--font-display); display: block; font-size: clamp(2rem, 6vw, 2.9rem); font-weight: 800; letter-spacing: -.03em; color: #fff; line-height: 1; }
 .loyalty-card__rule { font-size: var(--fs-sm); color: #D9C39A; margin: var(--space-1) 0 var(--space-3); }
 .loyalty-card__bottom { display: flex; justify-content: space-between; align-items: flex-end; gap: var(--space-3); font-size: var(--fs-sm); }
 .loyalty-card__bottom small { color: #AEB9C0; }

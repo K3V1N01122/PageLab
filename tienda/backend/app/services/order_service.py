@@ -34,6 +34,10 @@ TRANSITIONS = {
 STATUS_RANK = {"pending": 10, "paid": 20, "preparing": 30, "shipped": 40, "delivered": 50}
 
 
+class _AlreadyPlaced(Exception):
+    """Señal interna: el pedido ya existía (petición duplicada)."""
+
+
 def _order_number(db) -> str:
     for _ in range(10):
         num = f"PD-{now():%y%m%d}-{human_code(5)}"
@@ -72,8 +76,15 @@ def place_order(user: dict, data: dict) -> dict:
     points_to_use = int(data.get("points_to_use") or 0)
     currency = settings_service.get("store").get("currency", "GTQ")
 
+    duplicate_id = None
     try:
         with db.transaction():
+            # Re-verificación dentro del bloqueo: si una petición gemela (doble clic)
+            # ya creó el pedido mientras esperábamos, devolvemos ese mismo pedido.
+            existing = db.one("SELECT id FROM orders WHERE user_id = ? AND idempotency_key = ?", (user["id"], key))
+            if existing:
+                duplicate_id = existing["id"]
+                raise _AlreadyPlaced()
             items = cart_service.items(user["id"])
             if not items:
                 raise ValidationError("Tu carrito está vacío.", code="cart_empty")
@@ -138,6 +149,8 @@ def place_order(user: dict, data: dict) -> dict:
             if result.status == "paid":
                 _apply_transition(db, order, "paid", None, "Pago confirmado por el proveedor")
             cart_service.clear(db, user["id"])
+    except _AlreadyPlaced:
+        return get_order_for_user(user["id"], order_id=duplicate_id)
     except IntegrityError:
         # Dos peticiones simultáneas con la misma clave: la otra ganó.
         existing = db.one("SELECT id FROM orders WHERE user_id = ? AND idempotency_key = ?", (user["id"], key))

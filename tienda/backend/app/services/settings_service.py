@@ -97,12 +97,21 @@ def _validate_store(v: dict) -> dict:
     if not (v.get("name") or "").strip():
         raise ValidationError("El nombre es obligatorio.", details={"name": "Obligatorio."})
     v["logo_url"] = _safe_url(v.get("logo_url"), "logo_url", allow_relative=True)
+    for field, limit in (("tagline", 160), ("statement", 400), ("closing_line", 60)):
+        value = v.get(field)
+        if value is not None and (not isinstance(value, str) or len(value) > limit):
+            raise ValidationError("Texto demasiado largo.", details={field: f"Máximo {limit} caracteres."})
     v["is_placeholder"] = False
     return v
 
 
+FONT_PRESETS = {"deportiva", "editorial", "urbana", "clasica"}
+
+
 def _validate_theme(v: dict) -> dict:
     import re
+    if v.get("font") and v["font"] not in FONT_PRESETS:
+        raise ValidationError("Tipografía no válida.", details={"font": "Elige una opción de la lista."})
     for k in ("primary", "accent", "points"):
         if v.get(k) and not re.fullmatch(r"#[0-9a-fA-F]{6}", v[k]):
             raise ValidationError("Color no válido.", details={k: "Usa formato #RRGGBB."})

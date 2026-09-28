@@ -68,13 +68,17 @@ DEFAULT_SETTINGS = {
     "store": {
         "name": "Nombre de la tienda",
         "tagline": "Descripción corta de la tienda",
+        # Mensaje de marca en la portada. Las *palabras entre asteriscos* se resaltan.
+        "statement": None,
+        # Frase de cierre gigante en el pie de página (si falta, se usa el nombre).
+        "closing_line": None,
         "logo_url": None,
         "currency": "GTQ",
         "currency_symbol": "Q",
         "locale": "es-GT",
         "is_placeholder": True,
     },
-    "theme": {"primary": "#1F3B4D", "accent": "#2F7D6D", "points": "#B8862B"},
+    "theme": {"primary": "#1F3B4D", "accent": "#2F7D6D", "points": "#B8862B", "font": "deportiva"},
     "contact": {
         "email": None, "phone": None, "whatsapp": None, "address": None,
         "hours": None,

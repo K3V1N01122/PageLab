@@ -1,0 +1,32 @@
+/* ---------- Movimiento: entradas al hacer scroll ---------- */
+.motion-ready [data-reveal]:not([data-reveal="stagger"]) {
+  opacity: 0; transform: translateY(28px);
+  transition: opacity .8s var(--ease-out), transform .9s var(--ease-out);
+}
+.motion-ready [data-reveal].is-in:not([data-reveal="stagger"]) { opacity: 1; transform: none; }
+.motion-ready [data-reveal="stagger"] > * {
+  opacity: 0; transform: translateY(32px);
+  transition: opacity .7s var(--ease-out), transform .8s var(--ease-out);
+  transition-delay: calc(var(--i, 0) * 70ms);
+}
+.motion-ready [data-reveal="stagger"].is-in > * { opacity: 1; transform: none; }
+
+/* ---------- Texto partido en palabras con máscara ---------- */
+.split-w { display: inline-block; overflow: hidden; vertical-align: top; padding-bottom: .06em; margin-bottom: -.06em; }
+.split-w > span { display: inline-block; transform: translateY(105%); transition: transform 1s var(--ease-out); transition-delay: calc(var(--i, 0) * 90ms + 80ms); }
+[data-split].is-in .split-w > span { transform: none; }
+
+/* ---------- Cinta infinita ---------- */
+.marquee { overflow: hidden; background: var(--ink); color: var(--paper); border-block: 1px solid rgba(255,255,255,.08); }
+.marquee__track { display: flex; width: max-content; animation: marquee 38s linear infinite; }
+.marquee:hover .marquee__track { animation-play-state: paused; }
+.marquee__group { display: flex; align-items: center; flex-shrink: 0; }
+.marquee__item { font-family: var(--font-display); text-transform: var(--display-transform); display: inline-flex; align-items: center; gap: 1.4rem; padding: 1.1rem 0 1.1rem 1.4rem; font-size: clamp(1.05rem, 2vw, 1.4rem); font-weight: 600; letter-spacing: -.01em; white-space: nowrap; }
+.marquee__item::after { content: ""; width: 9px; height: 9px; background: var(--brass); transform: rotate(45deg); flex-shrink: 0; }
+@keyframes marquee { to { transform: translateX(-50%); } }
+
+@media (prefers-reduced-motion: reduce) {
+  .motion-ready [data-reveal], .motion-ready [data-reveal="stagger"] > *, .split-w > span { opacity: 1 !important; transform: none !important; transition: none !important; }
+  .marquee__track { animation: none; flex-wrap: wrap; width: auto; }
+  .marquee__group[aria-hidden="true"] { display: none; }
+}

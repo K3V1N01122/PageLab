@@ -10,9 +10,29 @@ import argparse
 import getpass
 import os
 import sys
+from pathlib import Path
 
-from app import create_app
-from app.db import get_db
+
+def load_env_file() -> None:
+    """Carga tienda/.env (si existe) antes de crear la app, sin dependencias.
+    Las variables ya definidas en el sistema tienen prioridad y las vacías se ignoran."""
+    env = Path(__file__).resolve().parent.parent / ".env"
+    if not env.exists():
+        return
+    for line in env.read_text(encoding="utf-8").splitlines():
+        line = line.strip()
+        if not line or line.startswith("#") or "=" not in line:
+            continue
+        key, value = line.split("=", 1)
+        key, value = key.strip(), value.strip().strip('"').strip("'")
+        if value and key not in os.environ:
+            os.environ[key] = value
+
+
+load_env_file()
+
+from app import create_app  # noqa: E402
+from app.db import get_db  # noqa: E402
 
 
 def cmd_migrate(app, _args):

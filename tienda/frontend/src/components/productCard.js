@@ -30,4 +30,5 @@ export function productCard(p) {
   </article>`;
 }
 
-export const productGrid = (items) => html`<div class="product-grid">${items.map(productCard)}</div>`;
+export const productGrid = (items, { reveal = false } = {}) =>
+  html`<div class="product-grid" ${reveal ? html`data-reveal="stagger"` : ''}>${items.map(productCard)}</div>`;

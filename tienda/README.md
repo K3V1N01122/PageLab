@@ -109,8 +109,10 @@ python manage.py run                  # http://127.0.0.1:5000
 > En desarrollo, `psycopg` y `gunicorn` se instalan pero no se usan. Si prefieres no
 > instalarlos: `pip install "Flask>=3.1,<3.2" "Pillow>=11,<13"`.
 
-La aplicación lee las variables del entorno del sistema. Para cargar un `.env` en
-desarrollo puedes usar `set -a; source ../.env; set +a` antes de `python manage.py run`.
+`manage.py` carga automáticamente el archivo `tienda/.env` si existe (las variables del
+sistema tienen prioridad y las vacías se ignoran). En Windows, después de la primera
+instalación basta con hacer **doble clic en `iniciar.bat`**: aplica migraciones pendientes,
+abre el navegador y enciende el servidor.
 
 ---
 

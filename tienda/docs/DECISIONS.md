@@ -13,9 +13,9 @@ dependencias y abstracción. Migrar sería viable porque la lógica está aislad
 ### 2. PostgreSQL en producción, SQLite en desarrollo
 El mismo SQL corre en ambos (traducción de parámetros y tipos en `db/`). SQLite permite
 instalar y probar sin servicios externos; PostgreSQL da concurrencia real y robustez.
-**Limitación honesta:** la batería de pruebas se ejecutó sobre SQLite (incluida la
-concurrencia) porque el entorno de desarrollo no tenía PostgreSQL. Antes de producción,
-ejecútala contra una base PostgreSQL **exclusiva para pruebas** (se borra en cada prueba):
+**Verificado:** las 69 pruebas (incluidas las de concurrencia) pasan en SQLite y en
+PostgreSQL 18. Para repetir la verificación contra una base PostgreSQL **exclusiva para
+pruebas** (se borra en cada prueba):
 `TEST_DATABASE_URL=postgresql://usuario:clave@localhost:5432/tienda_test python -m unittest discover -s tests -t .` El código usa solo SQL
 estándar compatible (`RETURNING`, `ON CONFLICT`, savepoints).
 

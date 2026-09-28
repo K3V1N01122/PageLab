@@ -24,6 +24,9 @@ export function renderFooter(el, categories = []) {
   const { items, nets } = contactLinks(config?.contact, config?.social);
   const c = config?.contact || {};
   render(el, html`
+    <div class="container footer__mark">
+      <p class="footer__wordmark" data-split>${s.closing_line || s.name || 'Tienda'}</p>
+    </div>
     <div class="container footer__grid">
       <section class="footer__brand">
         <p class="footer__name">${s.name || 'Tienda'}</p>

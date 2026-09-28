@@ -80,3 +80,5 @@ class SecurityTests(BaseTest):
         r = admin.put("/api/v1/admin/settings/social", {"instagram": "https://instagram.com/tienda"})
         self.assertEqual(r.status_code, 200)
         self.assertEqual(admin.put("/api/v1/admin/settings/theme", {"accent": "red;}"}).status_code, 422)
+        self.assertEqual(admin.put("/api/v1/admin/settings/theme", {"font": "comic-sans"}).status_code, 422)
+        self.assertEqual(admin.put("/api/v1/admin/settings/theme", {"font": "editorial"}).get_json()["font"], "editorial")
