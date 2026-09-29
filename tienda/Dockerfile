@@ -15,5 +15,6 @@ RUN useradd --create-home --uid 10001 app && mkdir -p /data/uploads && chown -R 
 USER app
 
 EXPOSE 8000
-# Workers = 2 x núcleos + 1 como punto de partida; ajustar con GUNICORN_CMD_ARGS.
-CMD ["sh", "-c", "python manage.py migrate && exec gunicorn wsgi:app --bind 0.0.0.0:8000 --workers ${WEB_CONCURRENCY:-3} --threads ${GUNICORN_THREADS:-4} --timeout 30 --access-logfile - --forwarded-allow-ips='*'"]
+# Al arrancar: migraciones; si DEMO_MODE=true, datos demo (no duplica) e imágenes demo.
+# El puerto sale de $PORT (lo fijan Render y otras plataformas) o 8000 por defecto.
+CMD ["sh", "-c", "python manage.py migrate && if [ \"$DEMO_MODE\" = \"true\" ]; then python manage.py seed-demo --force; fi && exec gunicorn wsgi:app --bind 0.0.0.0:${PORT:-8000} --workers ${WEB_CONCURRENCY:-2} --threads ${GUNICORN_THREADS:-4} --timeout 30 --access-logfile - --forwarded-allow-ips='*'"]

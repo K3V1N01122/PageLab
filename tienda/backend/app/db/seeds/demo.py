@@ -10,7 +10,9 @@ Para eliminarlos: `DELETE FROM products WHERE is_demo = TRUE` (ver README).
 from __future__ import annotations
 
 import colorsys
+import os
 import random
+import re
 
 from flask import current_app
 
@@ -79,9 +81,27 @@ def _placeholder(name: str, index: int, variant: int) -> str:
     return f"{current_app.config['UPLOAD_URL_PREFIX']}/demo/{fname}"
 
 
+def restore_demo_images(db) -> int:
+    """Vuelve a generar las imágenes demo que falten.
+
+    En hostings gratuitos (p. ej. Render) el disco se borra en cada reinicio,
+    así que las imágenes demo se recrean al arrancar. Las imágenes que suba el
+    administrador en ese tipo de hosting también se pierden al reiniciar.
+    """
+    restored = 0
+    prefix = f"{current_app.config['UPLOAD_URL_PREFIX']}/demo/"
+    for row in db.all("SELECT url FROM product_images WHERE url LIKE ?", (f"{prefix}demo-%",)):
+        m = re.search(r"demo-(\d+)-(\d+)\.webp$", row["url"])
+        if m and not (current_app.config["UPLOAD_DIR"] / "demo" / m.group(0)).exists():
+            _placeholder("", int(m.group(1)), int(m.group(2)))
+            restored += 1
+    return restored
+
+
 def seed(db) -> str:
     if db.one("SELECT id FROM products WHERE is_demo = TRUE LIMIT 1"):
-        return "Los datos de demostración ya existen."
+        restored = restore_demo_images(db)
+        return "Los datos de demostración ya existen." + (f" Se regeneraron {restored} imágenes." if restored else "")
     with db.transaction():
         cat_ids = {}
         for i, (name, parent, desc) in enumerate(CATEGORIES):
@@ -139,13 +159,15 @@ def seed(db) -> str:
             (cat_ids["Tecnología (demo)"], now_iso(), now_iso()),
         )
 
-    admin = user_service.register({"email": "admin.demo@example.com", "password": "AdminDemo123", "first_name": "Admin",
+    # En una demo publicada, define DEMO_ADMIN_PASSWORD para que nadie más entre al panel.
+    admin_password = os.getenv("DEMO_ADMIN_PASSWORD") or "AdminDemo123"
+    admin = user_service.register({"email": "admin.demo@example.com", "password": admin_password, "first_name": "Admin",
                                    "last_name": "Demo", "phone": None}, role_code="admin")
     customer = user_service.register({"email": "cliente.demo@example.com", "password": "ClienteDemo123",
                                       "first_name": "Cliente", "last_name": "Demo", "phone": "+502 5555 0000"})
     from app.services import loyalty_service
     loyalty_service.admin_adjust(customer["id"], 1500, "Saldo inicial de prueba", admin["id"])
     return ("Datos de demostración cargados.\n"
-            "  Admin demo:   admin.demo@example.com / AdminDemo123\n"
+            f"  Admin demo:   admin.demo@example.com / {'(DEMO_ADMIN_PASSWORD)' if os.getenv('DEMO_ADMIN_PASSWORD') else 'AdminDemo123'}\n"
             "  Cliente demo: cliente.demo@example.com / ClienteDemo123  (1,500 puntos de prueba)\n"
             "  Cupón demo:   DEMO10 (10% desde Q100)")
