@@ -27,6 +27,7 @@
 
 @media (prefers-reduced-motion: reduce) {
   .motion-ready [data-reveal], .motion-ready [data-reveal="stagger"] > *, .split-w > span { opacity: 1 !important; transform: none !important; transition: none !important; }
+  .hero__card .loyalty-card { animation: none !important; transform: rotate(-4deg); }
   .marquee__track { animation: none; flex-wrap: wrap; width: auto; }
   .marquee__group[aria-hidden="true"] { display: none; }
 }

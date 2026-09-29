@@ -199,7 +199,7 @@ en *Panel > Clientes y usuarios*.
 
 ```bash
 cd backend
-python -m unittest discover -s tests -t .      # 69 pruebas, ~15 s
+python -m unittest discover -s tests -t .      # 81 pruebas, ~20 s
 # Sobre PostgreSQL (base exclusiva de pruebas; se borra en cada prueba):
 TEST_DATABASE_URL=postgresql://usuario:clave@localhost:5432/tienda_test python -m unittest discover -s tests -t .
 # o, si instalaste pytest:
@@ -284,7 +284,7 @@ de tu proveedor). Con HTTPS activo, las cookies son `Secure` y se envía HSTS.
 - [ ] Nombre, logo, colores, contacto y redes en *Panel > Configuración*.
 - [ ] Reglas de puntos y recompensas revisadas en *Panel > Fidelización*.
 - [ ] Métodos de entrega y costos reales.
-- [ ] Proveedor de correo implementado (hoy los correos se escriben en el log).
+- [ ] Correo configurado (`MAIL_BACKEND=smtp` y credenciales en `.env`) y probado desde *Panel > Configuración > Probar el correo*.
 - [ ] Copias de seguridad automáticas de PostgreSQL y del volumen de imágenes.
 - [ ] Pooler de conexiones (PgBouncer) si se espera tráfico alto.
 
@@ -297,9 +297,9 @@ de tu proveedor). Con HTTPS activo, las cookies son `Secure` y se envía HSTS.
 | Productos reales | Datos demo marcados | Cargar desde el panel |
 | Logo y colores | Nombre y paleta provisional | *Panel > Configuración* |
 | Contacto y redes | Vacíos | *Panel > Configuración* |
-| Pago con tarjeta | Arquitectura lista; contra entrega y transferencia activos | Implementar un proveedor en `backend/app/payments/providers/` (ver docs/DECISIONS.md) |
+| Pago con tarjeta | Tarjeta Visa/Mastercard en modo demostración (`card_demo`, sin cobro); contra entrega y transferencia activos | Implementar un proveedor en `backend/app/payments/providers/` (ver docs/DECISIONS.md) |
 | Empresa de envíos | Métodos y costos configurables | *Panel > Configuración*; integración futura como servicio |
-| Correo transaccional | Se registra en el log | Implementar un backend en `notification_service.py` |
+| Correo transaccional | Listo por SMTP (configurado para Gmail): bienvenida, pedido, cambios de estado, recuperación y aviso al dueño | Poner `MAIL_BACKEND=smtp`, `SMTP_USER` y `SMTP_PASSWORD` en `.env` |
 | Textos legales | Marcador de posición visible | Reemplazar en `frontend/src/pages/legal.js` |
 | Código QR en la tarjeta | La tarjeta muestra número e ID de cliente | Agregar generador QR si se usará en tienda física |
 

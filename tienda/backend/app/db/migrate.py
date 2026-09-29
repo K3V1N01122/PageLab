@@ -101,6 +101,8 @@ DEFAULT_SETTINGS = {
         "free_shipping_over_cents": None,
     },
     "checkout": {"allow_notes": True},
+    # Correos que reciben el aviso de cada pedido nuevo (separados por comas).
+    "notifications": {"new_order_emails": None},
     "payments": {
         "bank_transfer_instructions": "La tienda te enviará los datos bancarios para completar la transferencia.",
     },

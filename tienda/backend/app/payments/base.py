@@ -14,6 +14,7 @@ from dataclasses import dataclass, field
 @dataclass
 class PaymentResult:
     status: str                      # pending | authorized | paid | failed
+    message: str | None = None       # motivo para el cliente si se rechaza
     provider_ref: str | None = None
     instructions: str | None = None  # texto para el cliente (p. ej. transferencia)
     redirect_url: str | None = None  # para pasarelas con página externa
@@ -25,8 +26,15 @@ class PaymentProvider:
     label: str = ""
     description: str = ""
     online: bool = False             # True si el cobro ocurre en línea
+    form: str | None = None          # formulario que muestra el checkout (p. ej. "card")
+    demo: bool = False               # True si no realiza cobros reales
 
-    def create_payment(self, order: dict) -> PaymentResult:
+    def validate_details(self, details) -> dict:
+        """Valida los datos extra que envía el checkout (p. ej. marca y últimos
+        4 dígitos de la tarjeta). Por defecto el método no necesita datos."""
+        return {}
+
+    def create_payment(self, order: dict, details: dict | None = None) -> PaymentResult:
         raise NotImplementedError
 
     def handle_webhook(self, payload: bytes, headers: dict) -> dict | None:
@@ -35,4 +43,5 @@ class PaymentProvider:
         return None
 
     def public_info(self) -> dict:
-        return {"code": self.code, "label": self.label, "description": self.description, "online": self.online}
+        return {"code": self.code, "label": self.label, "description": self.description, "online": self.online,
+                "form": self.form, "demo": self.demo}

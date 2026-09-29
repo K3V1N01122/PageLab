@@ -118,11 +118,7 @@ def request_password_reset(email: str) -> None:
         (user["id"], token_hash(token), iso_in(hours=1), now_iso()),
     )
     link = f"{current_app.config['PUBLIC_BASE_URL']}/restablecer-contrasena?token={token}"
-    notification_service.send_email(
-        user["email"], "Restablece tu contraseña",
-        f"Hola {user['first_name']},\n\nUsa este enlace para crear una contraseña nueva (válido 1 hora):\n{link}\n\n"
-        "Si no lo solicitaste, ignora este mensaje.",
-    )
+    notification_service.notify_password_reset(user["email"], user["first_name"], link)
 
 
 def reset_password(token: str, new_password: str) -> None:

@@ -11,6 +11,6 @@ class SandboxCard(PaymentProvider):
     description = "Simula un pago aprobado. No se realiza ningún cobro real."
     online = True
 
-    def create_payment(self, order):
+    def create_payment(self, order, details=None):
         return PaymentResult(status="paid", provider_ref=f"SANDBOX-{secrets.token_hex(6).upper()}",
                              details={"simulated": True})

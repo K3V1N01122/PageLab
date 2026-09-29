@@ -33,7 +33,7 @@ export default async function orderDetail(el, ctx) {
           <dl class="facts">
             <div><dt>Método de entrega</dt><dd>${o.shipping_method === 'pickup' ? 'Recoger en tienda' : 'Envío a domicilio'}</dd></div>
             ${a ? html`<div><dt>Dirección</dt><dd>${a.recipient}, ${a.phone}<br>${a.line1}${a.line2 ? `, ${a.line2}` : ''}<br>${a.city}${a.state ? `, ${a.state}` : ''}</dd></div>` : ''}
-            <div><dt>Pago</dt><dd>${o.payment_status === 'paid' ? 'Pagado' : 'Pendiente'}</dd></div>
+            <div><dt>Pago</dt><dd>${o.payment_status === 'paid' ? 'Pagado' : 'Pendiente'}${o.payment?.card ? ` con ${o.payment.card.brand} •••• ${o.payment.card.last4}` : ''}</dd></div>
           </dl>
           <h2 class="section__title">Historial</h2>
           <ol class="timeline">${o.history.map((h) => html`<li><strong>${h.to_label}</strong><span class="muted">${dateTime(h.created_at)}</span>${h.note ? html`<span>${h.note}</span>` : ''}</li>`)}</ol>

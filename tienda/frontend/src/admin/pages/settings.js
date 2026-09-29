@@ -60,6 +60,15 @@ export default async function settings(el) {
         ${textarea('bank_transfer_instructions', 'Instrucciones para transferencia', s.payments.bank_transfer_instructions, 3, false)}
         <p class="help">Los proveedores habilitados se configuran en el servidor (variable PAYMENT_PROVIDERS), nunca desde el navegador.</p>
         <button class="btn btn--primary" type="submit">Guardar</button></form>
+      <form class="a-card" data-key="notifications" novalidate><h2 class="a-card__title">Avisos de pedidos</h2>
+        <p class="form-summary notice notice--error" role="alert" tabindex="-1" hidden></p>
+        ${input('new_order_emails', 'Correos que reciben cada pedido nuevo', (s.notifications || {}).new_order_emails, { optional: true, help: 'Hasta 5, separados por comas. Ej.: ventas@gmail.com, dueño@gmail.com' })}
+        <button class="btn btn--primary" type="submit">Guardar</button></form>
+      <form class="a-card" data-test-email novalidate><h2 class="a-card__title">Probar el correo</h2>
+        <p class="form-summary notice notice--error" role="alert" tabindex="-1" hidden></p>
+        <p class="help">Envía un correo de prueba para confirmar que la tienda puede mandar confirmaciones. La cuenta de envío se configura en el archivo .env del servidor (SMTP_USER y SMTP_PASSWORD).</p>
+        ${input('to', 'Enviar a', '', { type: 'email' })}
+        <button class="btn btn--secondary" type="submit">Enviar correo de prueba</button></form>
       <form class="a-card" data-key="seo" novalidate><h2 class="a-card__title">SEO</h2>
         <p class="form-summary notice notice--error" role="alert" tabindex="-1" hidden></p>
         ${input('default_title', 'Título de la página de inicio', s.seo.default_title, { attrs: 'maxlength="70"' })}
@@ -67,6 +76,13 @@ export default async function settings(el) {
         ${input('og_image', 'Imagen para redes sociales (URL)', s.seo.og_image, { optional: true })}
         <button class="btn btn--primary" type="submit">Guardar</button></form>
     </div>`);
+  $$('form[data-test-email]', el).forEach((f) => f.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const btn = f.querySelector('button');
+    btn.disabled = true;
+    try { const r = await api.post('/admin/settings/test-email', { to: f.to.value }); toast(r.message); }
+    catch (err) { showErrors(f, err); } finally { btn.disabled = false; }
+  }));
   $$('form[data-key]', el).forEach((f) => f.addEventListener('submit', async (e) => {
     e.preventDefault();
     const key = f.dataset.key;

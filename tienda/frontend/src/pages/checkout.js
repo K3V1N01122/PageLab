@@ -8,6 +8,7 @@ import { formData, showErrors, clearErrors } from '../utils/forms.js';
 import { loading, empty } from '../components/states.js';
 import { toast, toastError } from '../components/toast.js';
 import { issuesList, readOpts, saveOpts, summary } from './cart.js';
+import { BRAND_LABEL, detectBrand, digits, formatExp, formatNumber, validateCard } from '../utils/card.js';
 
 const KEY_STORE = 'checkout:key';
 
@@ -82,6 +83,7 @@ export default async function checkout(el) {
               <label class="choice"><input type="radio" name="payment_provider" value="${p.code}" ${p.code === state.payment_provider ? 'checked' : ''}>
                 <span class="choice__body"><span class="choice__label">${p.label}</span><span class="choice__meta">${p.description}</span></span></label>`)}
             </div>
+            <div data-slot="card"></div>
           </fieldset>
           <fieldset class="step">
             <legend class="step__title">Descuentos</legend>
@@ -111,6 +113,60 @@ export default async function checkout(el) {
     </div>`);
 
   const form = $('[data-checkout]', el);
+  const provider = () => opts.payment_providers.find((p) => p.code === state.payment_provider);
+  const drawCard = () => {
+    const slot = $('[data-slot="card"]', el);
+    if (provider()?.form !== 'card') { render(slot, ''); return; }
+    render(slot, html`
+      <div class="card-pay">
+        <div class="pay-card" data-pay-card aria-hidden="true">
+          <div class="pay-card__face pay-card__front">
+            <div class="pay-card__top"><span class="pay-card__chip"></span><span class="pay-card__brand" data-pc-brand></span></div>
+            <p class="pay-card__number" data-pc-number>•••• •••• •••• ••••</p>
+            <div class="pay-card__bottom"><span data-pc-holder>NOMBRE DEL TITULAR</span><span data-pc-exp>MM/AA</span></div>
+          </div>
+          <div class="pay-card__face pay-card__back"><span class="pay-card__stripe"></span><span class="pay-card__cvv" data-pc-cvv>•••</span></div>
+        </div>
+        <div class="card-pay__fields">
+          <div class="field"><label for="cc-number">Número de tarjeta</label>
+            <div class="cc-input"><input id="cc-number" name="card.number" inputmode="numeric" autocomplete="cc-number" maxlength="23" placeholder="1234 5678 9012 3456">
+            <span class="cc-brand" data-brand hidden></span></div></div>
+          <div class="field"><label for="cc-holder">Nombre en la tarjeta</label>
+            <input id="cc-holder" name="card.holder" autocomplete="cc-name" maxlength="80"></div>
+          <div class="grid-2">
+            <div class="field"><label for="cc-exp">Vencimiento</label>
+              <input id="cc-exp" name="card.exp" inputmode="numeric" autocomplete="cc-exp" placeholder="MM/AA" maxlength="5"></div>
+            <div class="field"><label for="cc-cvv">CVV</label>
+              <input id="cc-cvv" name="card.cvv" inputmode="numeric" autocomplete="cc-csc" placeholder="123" maxlength="3" aria-describedby="cvv-help">
+              <p class="help" id="cvv-help">3 dígitos al reverso.</p></div>
+          </div>
+        </div>
+        ${provider().demo ? html`<div class="notice notice--info card-pay__demo">
+          <p><strong>Modo demostración:</strong> no se realiza ningún cobro. Tarjetas de prueba:</p>
+          <ul><li><code>4242 4242 4242 4242</code> Visa, aprobada</li><li><code>5555 5555 5555 4444</code> Mastercard, aprobada</li>
+          <li><code>4000 0000 0000 0002</code> rechazada</li></ul><p>Usa cualquier fecha futura y cualquier CVV de 3 dígitos.</p></div>` : ''}
+        <p class="help card-pay__secure">El número completo y el CVV no se envían ni se guardan en la tienda.</p>
+      </div>`);
+    const num = $('#cc-number', el); const hold = $('#cc-holder', el); const exp = $('#cc-exp', el); const cvv = $('#cc-cvv', el);
+    const card = $('[data-pay-card]', el); const badge = $('[data-brand]', el);
+    const update = () => {
+      const brand = detectBrand(num.value);
+      card.dataset.brand = brand || '';
+      $('[data-pc-brand]', el).textContent = brand ? BRAND_LABEL[brand] : '';
+      badge.hidden = !brand; badge.textContent = brand ? BRAND_LABEL[brand] : '';
+      const d = digits(num.value);
+      const shown = (d + '•'.repeat(16)).slice(0, Math.max(16, d.length));
+      $('[data-pc-number]', el).textContent = shown.replace(/(.{4})(?=.)/g, '$1 ');
+      $('[data-pc-holder]', el).textContent = hold.value.trim().toUpperCase() || 'NOMBRE DEL TITULAR';
+      $('[data-pc-exp]', el).textContent = exp.value || 'MM/AA';
+    };
+    num.addEventListener('input', () => { num.value = formatNumber(num.value); update(); });
+    exp.addEventListener('input', () => { exp.value = formatExp(exp.value); update(); });
+    cvv.addEventListener('input', () => { cvv.value = digits(cvv.value).slice(0, 3); $('[data-pc-cvv]', el).textContent = cvv.value.replace(/./g, '•').padEnd(3, '•'); });
+    hold.addEventListener('input', update);
+    cvv.addEventListener('focus', () => card.classList.add('is-back'));
+    cvv.addEventListener('blur', () => card.classList.remove('is-back'));
+  };
   const drawAddress = () => {
     const slot = $('[data-slot="address"]', el);
     if (!method()?.requires_address) { render(slot, ''); return; }
@@ -142,7 +198,7 @@ export default async function checkout(el) {
 
   form.addEventListener('change', (e) => {
     if (e.target.name === 'shipping_method') { state.shipping_method = e.target.value; drawAddress(); preview(); }
-    if (e.target.name === 'payment_provider') state.payment_provider = e.target.value;
+    if (e.target.name === 'payment_provider') { state.payment_provider = e.target.value; drawCard(); }
     saveOpts({ ...readOpts(), shipping_method: state.shipping_method, payment_provider: state.payment_provider });
   });
   $('[data-apply]', el).addEventListener('click', () => {
@@ -158,10 +214,19 @@ export default async function checkout(el) {
     const btn = $('[data-submit]', el);
     if (btn.disabled) return;
     const data = formData(form);
+    let cardDetails = null;
+    if (provider()?.form === 'card') {
+      const { errors, details } = validateCard({
+        number: $('#cc-number', el).value, holder: $('#cc-holder', el).value, exp: $('#cc-exp', el).value, cvv: $('#cc-cvv', el).value,
+      });
+      if (Object.keys(errors).length) { showErrors(form, { message: 'Revisa los datos de la tarjeta.', details: errors }); return; }
+      cardDetails = details; // solo marca, últimos 4, vencimiento y titular
+    }
     const body = {
       idempotency_key: idempotencyKey(),
       shipping_method: state.shipping_method,
       payment_provider: state.payment_provider,
+      payment_details: cardDetails,
       coupon_code: form.coupon_code.value.trim().toUpperCase() || null,
       points_to_use: form.points_to_use ? parseInt(form.points_to_use.value, 10) || 0 : 0,
       notes: data.notes,
@@ -187,6 +252,9 @@ export default async function checkout(el) {
         if (err.details) drawSummary(err.details);
         toast(err.message, 'error', 8000);
         $('[data-slot="issues"]', el).scrollIntoView({ behavior: 'smooth' });
+      } else if (err.code === 'payment_declined') {
+        showErrors(form, err);   // la tarjeta fue rechazada: no se creó el pedido
+        toastError(err);
       } else if (err.status === 422) {
         const details = Object.fromEntries(Object.entries(err.details || {}).map(([k, v]) => [k, v]));
         showErrors(form, { ...err, details });
@@ -202,5 +270,6 @@ export default async function checkout(el) {
   });
 
   drawAddress();
+  drawCard();
   await preview();
 }

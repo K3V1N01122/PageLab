@@ -23,3 +23,14 @@ def routes(bp):
         value = settings_service.update(key, json_body())
         audit("settings_updated", "settings", None, {"key": key})
         return jsonify(value)
+
+    @bp.post("/admin/settings/test-email")
+    @permission_required("settings.manage")
+    def admin_test_email():
+        from app.core.errors import AppError
+        from app.core.validation import V
+        from app.services import notification_service
+        data = V(json_body()).email("to").check()
+        if not notification_service.send_test(data["to"]):
+            raise AppError("No se pudo enviar. Revisa SMTP_USER y SMTP_PASSWORD en el archivo .env y el log del servidor.", code="mail_failed", status=502)
+        return jsonify({"message": f"Correo de prueba enviado a {data['to']}."})

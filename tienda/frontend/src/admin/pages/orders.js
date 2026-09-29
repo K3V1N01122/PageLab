@@ -73,7 +73,7 @@ async function detail(el, id) {
           <div><dt>Cliente</dt><dd>${o.customer_name}<br>${o.customer_email}${o.customer_phone ? html`<br>${o.customer_phone}` : ''}</dd></div>
           <div><dt>Entrega</dt><dd>${shipLabel}</dd></div>
           ${a ? html`<div><dt>Dirección</dt><dd>${a.recipient}, ${a.phone}<br>${a.line1}${a.line2 ? `, ${a.line2}` : ''}<br>${a.city}${a.state ? `, ${a.state}` : ''}${a.notes ? html`<br>${a.notes}` : ''}</dd></div>` : ''}
-          <div><dt>Pago</dt><dd>${payLabel}: ${PAY_STATUS[o.payment_status === 'paid' ? 'paid' : o.payment?.status || 'pending'] || o.payment?.status}</dd></div>
+          <div><dt>Pago</dt><dd>${payLabel}: ${PAY_STATUS[o.payment_status === 'paid' ? 'paid' : o.payment?.status || 'pending'] || o.payment?.status}${o.payment?.card ? html`<br>${o.payment.card.brand} •••• ${o.payment.card.last4}${o.payment.card.demo ? ' (demostración)' : ''}` : ''}</dd></div>
           ${o.notes ? html`<div><dt>Notas del cliente</dt><dd>${o.notes}</dd></div>` : ''}
         </dl>
         ${can('orders.update') && next.length ? html`

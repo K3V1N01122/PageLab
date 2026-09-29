@@ -7,6 +7,6 @@ class BankTransfer(PaymentProvider):
     label = "Transferencia o depósito bancario"
     description = "Confirmamos tu pedido cuando recibimos el pago."
 
-    def create_payment(self, order):
+    def create_payment(self, order, details=None):
         text = settings_service.get("payments").get("bank_transfer_instructions")
         return PaymentResult(status="pending", instructions=f"{text} Referencia: {order['order_number']}.")

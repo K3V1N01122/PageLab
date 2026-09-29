@@ -73,10 +73,18 @@ class BaseConfig:
 
     # Pagos: proveedores habilitados, en orden de aparición en el checkout
     PAYMENT_PROVIDERS = _list("PAYMENT_PROVIDERS", "cash_on_delivery,bank_transfer")
+    # Modo demostración: permite el pago con tarjeta simulado (card_demo) en una
+    # tienda publicada. Nunca activarlo en la tienda real de un cliente.
+    DEMO_MODE = _bool("DEMO_MODE", False)
 
     # Correo (proveedor pendiente de definir: por defecto se registra en el log)
     MAIL_BACKEND = os.getenv("MAIL_BACKEND", "console")
-    MAIL_FROM = os.getenv("MAIL_FROM", "no-reply@example.com")
+    MAIL_FROM = os.getenv("MAIL_FROM", "")            # vacío = se usa SMTP_USER
+    MAIL_FROM_NAME = os.getenv("MAIL_FROM_NAME", "")  # vacío = nombre de la tienda
+    SMTP_HOST = os.getenv("SMTP_HOST", "smtp.gmail.com")
+    SMTP_PORT = _int("SMTP_PORT", 587)
+    SMTP_USER = os.getenv("SMTP_USER", "")
+    SMTP_PASSWORD = os.getenv("SMTP_PASSWORD", "")
 
     AUTO_MIGRATE = _bool("AUTO_MIGRATE", False)
     LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO")
@@ -87,7 +95,7 @@ class DevelopmentConfig(BaseConfig):
     ENV = "development"
     DEBUG = True
     SECRET_KEY = os.getenv("SECRET_KEY", "dev-only-insecure-key-change-me")
-    PAYMENT_PROVIDERS = _list("PAYMENT_PROVIDERS", "cash_on_delivery,bank_transfer,sandbox_card")
+    PAYMENT_PROVIDERS = _list("PAYMENT_PROVIDERS", "cash_on_delivery,bank_transfer,card_demo")
 
 
 class TestingConfig(BaseConfig):
@@ -96,7 +104,7 @@ class TestingConfig(BaseConfig):
     SECRET_KEY = "testing-key"
     DATABASE_URL = os.getenv("TEST_DATABASE_URL", "sqlite:///:memory:")
     RATE_LIMIT_ENABLED = False
-    PAYMENT_PROVIDERS = ["cash_on_delivery", "bank_transfer", "sandbox_card"]
+    PAYMENT_PROVIDERS = ["cash_on_delivery", "bank_transfer", "card_demo", "sandbox_card"]
     SERVE_FRONTEND = False
     LOG_LEVEL = "WARNING"
 
@@ -115,6 +123,8 @@ class ProductionConfig(BaseConfig):
             raise RuntimeError("En producción use PostgreSQL (DATABASE_URL=postgresql://...).")
         if "sandbox_card" in cls.PAYMENT_PROVIDERS:
             raise RuntimeError("El proveedor sandbox_card no puede habilitarse en producción.")
+        if "card_demo" in cls.PAYMENT_PROVIDERS and not cls.DEMO_MODE:
+            raise RuntimeError("card_demo (tarjeta de demostración) solo se permite con DEMO_MODE=true.")
 
 
 CONFIGS = {

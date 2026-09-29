@@ -130,7 +130,20 @@ def _validate_seo(v: dict) -> dict:
     return v
 
 
-VALIDATORS = {"loyalty": _validate_loyalty, "shipping": _validate_shipping, "social": _validate_social,
+def _validate_notifications(v: dict) -> dict:
+    from app.core.validation import EMAIL_RE
+    raw = v.get("new_order_emails") or ""
+    if not isinstance(raw, str):
+        raise ValidationError("Correos no válidos.")
+    emails = [e.strip().lower() for e in raw.split(",") if e.strip()]
+    bad = [e for e in emails if not EMAIL_RE.match(e)]
+    if bad or len(emails) > 5:
+        raise ValidationError("Revisa los correos.", details={"new_order_emails": "Hasta 5 correos válidos, separados por comas."})
+    v["new_order_emails"] = ", ".join(emails) or None
+    return v
+
+
+VALIDATORS = {"notifications": _validate_notifications, "loyalty": _validate_loyalty, "shipping": _validate_shipping, "social": _validate_social,
               "store": _validate_store, "theme": _validate_theme, "contact": _validate_contact, "seo": _validate_seo}
 EDITABLE = set(DEFAULT_SETTINGS)
 

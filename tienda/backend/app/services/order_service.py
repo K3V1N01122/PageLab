@@ -9,7 +9,7 @@ from __future__ import annotations
 import logging
 import re
 
-from app.core.errors import Conflict, NotFound, ValidationError
+from app.core.errors import AppError, Conflict, NotFound, ValidationError
 from app.core.jsonutil import dump_json, load_json
 from app.core.security import human_code
 from app.core.timeutil import now, now_iso
@@ -63,6 +63,7 @@ def place_order(user: dict, data: dict) -> dict:
         return get_order_for_user(user["id"], order_id=existing["id"])
 
     provider = payments.get(data.get("payment_provider"))
+    payment_details = provider.validate_details(data.get("payment_details"))
     method_code = data.get("shipping_method")
     method = next((m for m in pricing_service.shipping_methods() if m["code"] == method_code), None)
     if not method:
@@ -139,7 +140,11 @@ def place_order(user: dict, data: dict) -> dict:
             loyalty_service.add_pending_for_order(db, user["id"], q["points_earned"], order_id, order["order_number"])
             _history(db, order_id, None, "pending", "Pedido creado", user["id"])
 
-            result = provider.create_payment(order)
+            result = provider.create_payment(order, payment_details)
+            if result.status == "failed":
+                # Rechazo: se revierte todo (stock, cupón, puntos); no queda pedido.
+                raise AppError(result.message or "El pago fue rechazado.", code="payment_declined", status=402,
+                               details={"card.number": result.message} if provider.form == "card" else None)
             db.insert(
                 """INSERT INTO payments (order_id, provider, status, amount_cents, currency, provider_ref, details, created_at, updated_at)
                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)""",
@@ -239,8 +244,7 @@ def change_status(order_id: int, to_status: str, by: int | None, note: str | Non
             raise NotFound("Pedido no encontrado.")
         _apply_transition(db, order, to_status, by, note)
     order = get_order_admin(order_id)
-    notification_service.send_email(order["customer_email"], f"Tu pedido {order['order_number']}: {order['status_label']}",
-                                    f"El estado de tu pedido ahora es: {order['status_label']}.")
+    notification_service.notify_status_changed(order)
     return order
 
 
@@ -270,7 +274,8 @@ def _serialize(order: dict, items: list[dict], history: list[dict] | None = None
         out["history"] = [h | {"to_label": labels.get(h["to_status"], h["to_status"])} for h in history]
     if payment:
         details = load_json(payment.get("details"), {}) or {}
-        out["payment"] = {"status": payment["status"], "provider": payment["provider"], "instructions": details.get("instructions")}
+        out["payment"] = {"status": payment["status"], "provider": payment["provider"], "instructions": details.get("instructions"),
+                          "card": details.get("card")}
     return out
 
 
@@ -324,9 +329,4 @@ def list_for_user(user_id: int, scope: str, page: int, size: int) -> tuple[list[
 
 
 def _notify_created(order: dict) -> None:
-    lines = "\n".join(f"- {i['quantity']} x {i['product_name']}" for i in order["items"])
-    instructions = (order.get("payment") or {}).get("instructions") or ""
-    notification_service.send_email(
-        order["customer_email"], f"Recibimos tu pedido {order['order_number']}",
-        f"Gracias por tu compra.\n\n{lines}\n\nTotal: {order['total_cents'] / 100:.2f} {order['currency']}\n{instructions}",
-    )
+    notification_service.notify_order_created(order)

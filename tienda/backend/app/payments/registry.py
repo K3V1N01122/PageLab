@@ -2,10 +2,11 @@ from flask import current_app
 
 from app.core.errors import ValidationError
 from app.payments.providers.bank_transfer import BankTransfer
+from app.payments.providers.card_demo import CardDemo
 from app.payments.providers.cash_on_delivery import CashOnDelivery
 from app.payments.providers.sandbox_card import SandboxCard
 
-PROVIDERS = {cls.code: cls for cls in (CashOnDelivery, BankTransfer, SandboxCard)}
+PROVIDERS = {cls.code: cls for cls in (CashOnDelivery, BankTransfer, CardDemo, SandboxCard)}
 
 
 def enabled() -> list:

@@ -25,6 +25,8 @@ def register():
     if not data["accept_terms"]:
         raise ValidationError("Revisa los campos marcados.", details={"accept_terms": "Debes aceptar los términos y condiciones."})
     user = user_service.register(data)
+    from app.services import notification_service
+    notification_service.notify_welcome(user["email"], user["first_name"])
     token, max_age = auth.create_session(user["id"], remember=False)
     resp = jsonify({"user": user_service.public_user(user_service.with_role(user["id"]))})
     auth.set_session_cookie(resp, token, max_age)
