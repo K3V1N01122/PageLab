@@ -12,10 +12,13 @@ Para WhatsApp o notificaciones push se agregaría otro canal con la misma idea.
 from __future__ import annotations
 
 import html
+import json
 import logging
 import smtplib
 import ssl
 import threading
+import urllib.error
+import urllib.request
 from email.message import EmailMessage
 from email.utils import formataddr, make_msgid
 
@@ -70,7 +73,46 @@ class SMTPMailer:
                 s.send_message(msg)
 
 
-BACKENDS = {"console": ConsoleMailer, "memory": MemoryMailer, "smtp": SMTPMailer}
+class BrevoMailer:
+    """Envío por la API HTTPS de Brevo (https://www.brevo.com).
+
+    Sirve donde el hosting bloquea los puertos de correo (p. ej. Render Free).
+    Requiere BREVO_API_KEY y un remitente verificado en Brevo (MAIL_FROM).
+    Plan gratuito: 300 correos al día.
+    """
+    URL = "https://api.brevo.com/v3/smtp/email"
+
+    def send(self, to, subject, text, html_body=None):
+        cfg = current_app.config
+        if not cfg.get("BREVO_API_KEY") or not cfg.get("MAIL_FROM"):
+            raise RuntimeError("Faltan BREVO_API_KEY o MAIL_FROM (remitente verificado en Brevo)")
+        from app.services import settings_service
+        store_name = settings_service.get("store").get("name") or "Tienda"
+        payload = {
+            "sender": {"name": cfg.get("MAIL_FROM_NAME") or store_name, "email": cfg["MAIL_FROM"]},
+            "to": [{"email": to}],
+            "subject": subject,
+            "textContent": text,
+        }
+        if html_body:
+            payload["htmlContent"] = html_body
+        reply_to = settings_service.get("contact").get("email")
+        if reply_to:
+            payload["replyTo"] = {"email": reply_to}
+        req = urllib.request.Request(
+            self.URL, data=json.dumps(payload).encode("utf-8"), method="POST",
+            headers={"api-key": cfg["BREVO_API_KEY"], "accept": "application/json", "content-type": "application/json"},
+        )
+        try:
+            with urllib.request.urlopen(req, timeout=15) as resp:
+                if resp.status >= 300:
+                    raise RuntimeError(f"Brevo respondió {resp.status}")
+        except urllib.error.HTTPError as exc:
+            detail = exc.read().decode("utf-8", "replace")[:300]
+            raise RuntimeError(f"Brevo rechazó el envío ({exc.code}): {detail}") from None
+
+
+BACKENDS = {"console": ConsoleMailer, "memory": MemoryMailer, "smtp": SMTPMailer, "brevo": BrevoMailer}
 
 
 def _deliver(backend, to, subject, text, html_body) -> bool:
@@ -88,7 +130,7 @@ def send_email(to: str, subject: str, text: str, html_body: str | None = None, *
     wait=True espera el resultado (se usa en el correo de prueba del panel)."""
     name = current_app.config.get("MAIL_BACKEND", "console")
     backend = BACKENDS.get(name, ConsoleMailer)()
-    if name != "smtp" or wait:
+    if name not in ("smtp", "brevo") or wait:
         return _deliver(backend, to, subject, text, html_body)
     app = current_app._get_current_object()
 

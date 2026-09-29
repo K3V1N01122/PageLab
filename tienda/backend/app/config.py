@@ -79,6 +79,7 @@ class BaseConfig:
 
     # Correo (proveedor pendiente de definir: por defecto se registra en el log)
     MAIL_BACKEND = os.getenv("MAIL_BACKEND", "console")
+    BREVO_API_KEY = os.getenv("BREVO_API_KEY", "")
     MAIL_FROM = os.getenv("MAIL_FROM", "")            # vacío = se usa SMTP_USER
     MAIL_FROM_NAME = os.getenv("MAIL_FROM_NAME", "")  # vacío = nombre de la tienda
     SMTP_HOST = os.getenv("SMTP_HOST", "smtp.gmail.com")

@@ -13,8 +13,9 @@ celular.
 
 - **Se duerme tras 15 minutos sin visitas.** La primera visita después tarda cerca de 1 minuto
   en cargar. Antes de mostrarla a un cliente, ábrela un minuto antes.
-- **Correos:** Render Free bloquea los puertos de correo (SMTP), así que Gmail no envía desde
-  la demo publicada. En tu computadora siguen funcionando.
+- **Correos:** Render Free bloquea los puertos de correo (SMTP), así que Gmail por SMTP no envía
+  desde la demo publicada. Usa **Brevo** (gratis, 300 correos/día), que envía por HTTPS: ver la
+  sección «Correos en la demo publicada».
 - **Imágenes subidas desde el panel:** el disco de Render Free se borra en cada reinicio. Las
   imágenes de los productos demo se regeneran solas; las que subas tú se perderían.
 - Es para **mostrar**, no para una tienda real. Una tienda real usa un plan de pago.
@@ -77,3 +78,22 @@ En Render abre tu servicio → **Logs**. Los errores más comunes:
 | `En producción use PostgreSQL` | `DATABASE_URL` vacía o mal copiada. |
 | `card_demo … solo se permite con DEMO_MODE=true` | Agrega `DEMO_MODE=true`. |
 | «La sesión del formulario expiró» al iniciar sesión | `PUBLIC_BASE_URL` no coincide con la dirección real (revisa `https` y el nombre). |
+
+## Correos en la demo publicada (Brevo)
+
+1. Crea una cuenta gratis en <https://www.brevo.com>.
+2. **Senders** (Remitentes) → agrega tu correo (por ejemplo tu Gmail) y confírmalo desde el
+   mensaje que te llega.
+3. **SMTP & API → API Keys** → **Generate a new API key** y cópiala. Es una contraseña.
+4. En Render → Environment cambia o agrega:
+
+| Variable | Valor |
+|---|---|
+| `MAIL_BACKEND` | `brevo` |
+| `BREVO_API_KEY` | La clave de Brevo |
+| `MAIL_FROM` | El correo que verificaste en Brevo |
+
+5. Guarda, espera el despliegue y prueba en *Panel → Configuración → Probar el correo*.
+
+Si usas un Gmail como remitente, algunos correos pueden llegar a **spam**, porque los envía un
+servidor que no es de Google. Para una tienda real, lo ideal es un dominio propio verificado en Brevo.

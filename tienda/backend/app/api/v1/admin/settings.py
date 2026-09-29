@@ -32,5 +32,5 @@ def routes(bp):
         from app.services import notification_service
         data = V(json_body()).email("to").check()
         if not notification_service.send_test(data["to"]):
-            raise AppError("No se pudo enviar. Revisa SMTP_USER y SMTP_PASSWORD en el archivo .env y el log del servidor.", code="mail_failed", status=502)
+            raise AppError("No se pudo enviar. Revisa la configuración de correo (SMTP_USER/SMTP_PASSWORD o BREVO_API_KEY/MAIL_FROM) y el log del servidor.", code="mail_failed", status=502)
         return jsonify({"message": f"Correo de prueba enviado a {data['to']}."})
